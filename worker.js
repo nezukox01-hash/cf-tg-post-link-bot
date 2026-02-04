@@ -42,7 +42,12 @@ export default {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           chat_id: chat.id,
-          text: `🔗 Open original post:\n${postLink}`
+          text: "🔗 Open original post",
+          disable_web_page_preview: true,
+          reply_to_message_id: msg.message_id,
+          reply_markup: {
+            inline_keyboard: [[{ text: "VIEW MESSAGE", url: postLink }]]
+          }
         })
       });
 
