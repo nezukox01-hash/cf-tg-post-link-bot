@@ -24,7 +24,7 @@ export default {
 
       const chat = msg.chat;
 
-      // Only PUBLIC groups/channels (must have username)
+      // Only PUBLIC groups
       if (!chat.username) {
         return new Response("Private group", { status: 200 });
       }
@@ -35,13 +35,17 @@ export default {
 
       const postLink = `https://t.me/${chat.username}/${msg.message_id}`;
 
-      // --- Secret/Spoiler text ---
-      const secretText = "Secret text"; // <- hrere secret version 
-      const text = `🔗 Open original post:\n${postLink}\n\n${secretText}`;
+      // Text where ONLY the link is hidden
+      const visibleText = "🔗 Open original post\n";
+      const text = visibleText + postLink;
 
-      // Telegram spoiler entity needs offset+length (UTF-16 code units)
-      const offset = text.length - secretText.length;
-      const entities = [{ type: "spoiler", offset, length: secretText.length }];
+      const entities = [
+        {
+          type: "spoiler",
+          offset: visibleText.length,
+          length: postLink.length
+        }
+      ];
 
       await fetch(`https://api.telegram.org/bot${env.BOT_TOKEN}/sendMessage`, {
         method: "POST",
@@ -50,13 +54,14 @@ export default {
           chat_id: chat.id,
           text,
           entities,
-          disable_web_page_preview: true // ✅ card view off
+          disable_web_page_preview: true,
+          reply_to_message_id: msg.message_id
         })
       });
 
       return new Response("OK", { status: 200 });
+
     } catch (e) {
-      // Never return 500 to Telegram
       return new Response("OK", { status: 200 });
     }
   }
