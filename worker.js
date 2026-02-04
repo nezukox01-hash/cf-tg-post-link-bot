@@ -1,6 +1,5 @@
 export default {
   async fetch(request, env) {
-    // Telegram webhook MUST always get 200
     try {
       if (request.method !== "POST") {
         return new Response("OK", { status: 200 });
@@ -25,12 +24,10 @@ export default {
 
       const chat = msg.chat;
 
-      // Only PUBLIC groups (must have username)
       if (!chat.username) {
         return new Response("Private group", { status: 200 });
       }
 
-      // BOT_TOKEN must exist
       if (!env.BOT_TOKEN) {
         return new Response("Missing BOT_TOKEN", { status: 200 });
       }
@@ -42,20 +39,14 @@ export default {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           chat_id: chat.id,
-          text: "🔗 Open original post",
-          disable_web_page_preview: true,
-          reply_to_message_id: msg.message_id,
-          reply_markup: {
-            inline_keyboard: [[{ text: "VIEW MESSAGE", url: postLink }]]
-          }
+          text: `🔗 Open original post:\n${postLink}`,
+          disable_web_page_preview: true   // ✅ এই লাইনটাই আসল কাজ
         })
       });
 
-      // SUCCESS → still return 200
       return new Response("OK", { status: 200 });
 
     } catch (e) {
-      // ❗ Even on error, NEVER return 500
       return new Response("OK", { status: 200 });
     }
   }
