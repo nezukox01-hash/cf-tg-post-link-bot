@@ -25,25 +25,39 @@ export default {
 
       if (!env.BOT_TOKEN) return new Response("Missing BOT_TOKEN", { status: 200 });
 
-      // Only edit text messages (photos/captions can be added later if you want)
-      if (!msg.text) return new Response("Not a text message", { status: 200 });
-
       const postLink = `https://t.me/${chat.username}/${msg.message_id}`;
 
-      // New edited message text
-      const newText =
-        msg.text +
-        "\n\n🔗 Open original post: " +
-        postLink;
+      // 1) Send a small bot message (NO reply, NO preview card)
+      const sendRes = await fetch(
+        `https://api.telegram.org/bot${env.BOT_TOKEN}/sendMessage`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            chat_id: chat.id,
+            text: `🔗 Open original post:\n${postLink}`,
+            disable_web_page_preview: true
+          })
+        }
+      );
 
-      // Edit the ORIGINAL message (no reply preview)
+      const sendData = await sendRes.json();
+
+      // If send failed, stop (but still return 200 to Telegram)
+      if (!sendData.ok) return new Response("OK", { status: 200 });
+
+      const botMessageId = sendData.result.message_id;
+
+      // 2) Edit the bot's own message (example: add extra line / style)
+      const editedText = `🔗 Open original post:\n${postLink}\n\n✅ Tap the link to open`;
+
       await fetch(`https://api.telegram.org/bot${env.BOT_TOKEN}/editMessageText`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           chat_id: chat.id,
-          message_id: msg.message_id,
-          text: newText,
+          message_id: botMessageId,
+          text: editedText,
           disable_web_page_preview: true
         })
       });
