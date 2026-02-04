@@ -1,1 +1,0 @@
-# cf-tg-post-link-bot
